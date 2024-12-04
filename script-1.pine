@@ -1,0 +1,77 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © gacarapimarconi
+
+//@version=5
+indicator("My script", overlay=true)
+
+// Entradas configurables para las EMAs
+emaShortPeriod = input.int(21, title="Short EMA Period", minval=1, group="EMA Settings")
+emaMediumPeriod = input.int(50, title="Medium EMA Period", minval=1, group="EMA Settings")
+emaLongPeriod = input.int(100, title="Long EMA Period", minval=1, group="EMA Settings")
+
+emaShortColor = input.color(color.green, title="Short EMA Color", group="EMA Settings")
+emaMediumColor = input.color(color.yellow, title="Medium EMA Color", group="EMA Settings")
+emaLongColor = input.color(color.red, title="Long EMA Color", group="EMA Settings")
+
+// Cálculo de las EMAs
+emaShort = ta.ema(close, emaShortPeriod)
+emaMedium = ta.ema(close, emaMediumPeriod)
+emaLong = ta.ema(close, emaLongPeriod)
+
+// Gráficos de las EMAs
+plot(emaShort, color=emaShortColor, title="Short EMA", linewidth=2)
+plot(emaMedium, color=emaMediumColor, title="Medium EMA", linewidth=2)
+plot(emaLong, color=emaLongColor, title="Long EMA", linewidth=2)
+
+
+// BB
+
+
+// Función para calcular Bandas de Bollinger
+bollingerBands(src, length, mult) =>
+    basis = ta.sma(src, length)
+    dev = mult * ta.stdev(src, length)
+    [basis, basis + dev, basis - dev] // Devuelve la línea media, la banda superior e inferior
+
+// Entradas configurables para las Bandas de Bollinger
+bbLength = input.int(40, title="Bollinger Bands Length", minval=1, group="Bollinger Bands Settings")
+bbMult = input.float(2.0, title="Bollinger Bands Multiplier", minval=0.1, group="Bollinger Bands Settings")
+
+bbBasisColor = input.color(color.white, title="BB Basis Color", group="Bollinger Bands Settings")
+bbUpperColor = input.color(color.white, title="BB Upper Band Color",group="Bollinger Bands Settings")
+bbLowerColor = input.color(color.white, title="BB Lower Band Color", group="Bollinger Bands Settings")
+
+// Cálculo de las Bandas de Bollinger
+[basis, upper, lower] = bollingerBands(hlc3, bbLength, bbMult)
+
+// Gráficos de las Bandas de Bollinger
+plot(basis, color=bbBasisColor, title="BB Basis", linewidth=1, style = plot.style_circles)
+plot(upper, color=bbUpperColor, title="BB Upper Band", linewidth=1)
+plot(lower, color=bbLowerColor, title="BB Lower Band", linewidth=1)
+
+
+// RSI
+
+// Entradas configurables para el RSI
+rsiLength = input.int(14, title="RSI Length", minval=1, group="RSI Settings")
+rsiOverbought = input.int(70, title="Overbought Level", minval=50, maxval=100, group="RSI Settings")
+rsiOversold = input.int(30, title="Oversold Level", minval=0, maxval=50, group="RSI Settings")
+
+// Cálculo del RSI
+rsiValue = ta.rsi(close, rsiLength)
+
+// Mostrar RSI como etiqueta en el gráfico principal
+rsiLabel = label.new(bar_index, high, text="RSI: " + str.tostring(rsiValue, format.percent), textcolor=color.white, style=label.style_circle, color= rsiValue > 80 or rsiValue < 20 ? color.new(color.red, 50) : color.new(color.purple, 90))
+label.delete(rsiLabel[1])
+
+// TREND
+
+is_uptrend = emaShort > emaMedium and emaMedium < emaLong
+is_downtrend = emaShort < emaMedium and emaMedium < emaLong
+
+// Colorear el fondo según la tendencia
+bgcolor(is_uptrend ? color.new(color.green, 90) : na, title="Uptrend")
+bgcolor(is_downtrend ? color.new(color.red, 90) : na, title="DownTrend")
+
+// PIVOTS
+
